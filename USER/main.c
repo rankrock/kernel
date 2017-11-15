@@ -1,12 +1,17 @@
 #include "sys.h"
 #include "delay.h"
 #include "usart.h"
+#include "key.h"
+#include "key_exti.h"
 #include "led.h"
 #include "lcd.h"
 #include "ltdc.h"
 #include "sdram.h"
 #include "mpu.h"
 #include "includes.h"
+#include "timer.h"
+#include "usart3.h"
+#include "gizwits_product.h" 
 /************************************************
  ALIENTEK 阿波罗STM32F7开发板 UCOSIII实验
  例6-3 UCOSIII 时间片轮转调度
@@ -25,38 +30,64 @@
  作者：正点原子 @ALIENTEK
 ************************************************/
 
-//任务优先级
-#define START_TASK_PRIO		3
-//任务堆栈大小	
-#define START_STK_SIZE 		128
-//任务控制块
-OS_TCB StartTaskTCB;
-//任务堆栈	
-CPU_STK START_TASK_STK[START_STK_SIZE];
-//任务函数
-void start_task(void *p_arg);
+//task start
+#define START_TASK_PRIO		3			//任务优先级
+#define START_STK_SIZE 		128			//任务堆栈大小	
+OS_TCB StartTaskTCB;					//任务控制块
+CPU_STK START_TASK_STK[START_STK_SIZE];	//任务堆栈	
+void start_task(void *p_arg);			//任务函数
 
-//任务优先级
-#define TASK1_TASK_PRIO		4
-//任务堆栈大小	
-#define TASK1_STK_SIZE 		128
-//任务控制块
-OS_TCB Task1_TaskTCB;
-//任务堆栈	
-CPU_STK TASK1_TASK_STK[TASK1_STK_SIZE];
+//task1
+#define TASK1_TASK_PRIO		4			//任务优先级
+#define TASK1_STK_SIZE 		128			//任务堆栈大小
+OS_TCB Task1_TaskTCB;					//任务控制块
+CPU_STK TASK1_TASK_STK[TASK1_STK_SIZE]; //任务堆栈	
 void task1_task(void *p_arg);
 
-//任务优先级
-#define TASK2_TASK_PRIO		4
-//任务堆栈大小	
-#define TASK2_STK_SIZE 		128
-//任务控制块
-OS_TCB Task2_TaskTCB;
-//任务堆栈	
-CPU_STK TASK2_TASK_STK[TASK2_STK_SIZE];
-//任务函数
-void task2_task(void *p_arg);
+//task2
+#define TASK2_TASK_PRIO		4            //任务优先级
+#define TASK2_STK_SIZE 		128          //任务堆栈大小	
+OS_TCB Task2_TaskTCB;                    //任务控制块
+CPU_STK TASK2_TASK_STK[TASK2_STK_SIZE];	 //任务堆栈	
+void task2_task(void *p_arg);            //任务函数
 
+//task3
+#define TASK3_TASK_PRIO		4            //任务优先级
+#define TASK3_STK_SIZE 		128          //任务堆栈大小	
+OS_TCB Task3_TaskTCB;                    //任务控制块
+CPU_STK TASK3_TASK_STK[TASK3_STK_SIZE];	 //任务堆栈	
+void task3_task(void *p_arg);            //任务函数
+
+// 机智云 ----
+/* 用户区当前设备状态结构体*/
+dataPoint_t currentDataPoint;
+
+//Gizwits协议初始化
+void Gizwits_Init(void)
+{
+	TIM3_Init(10-1,10800-1); //1MS系统定时 
+	uart3_init(9600);//WIFI初始化 
+	memset((uint8_t*)&currentDataPoint, 0, sizeof(dataPoint_t));//设备状态结构体初始化
+	gizwitsInit();//缓冲区初始化
+	
+}
+
+//数据采集
+void userHandle(void)
+{
+   	u8 led1;
+	
+    led1 = HAL_GPIO_ReadPin(GPIOB,GPIO_PIN_0);//判断当前LED1开关量
+	if(led1==0)
+	{
+	   currentDataPoint. valueLED_OnOff= 1;
+	}
+	else
+	{
+	   currentDataPoint. valueLED_OnOff= 0;
+	}  
+}
+// ----------
 
 int main(void)
 {
@@ -71,15 +102,20 @@ int main(void)
     delay_init(216);                //延时初始化
 	uart_init(115200);		        //串口初始化
     LED_Init();                     //初始化LED
+	KEY_Init();     				//按键初始化
+	//KEY_EXTI_Init();                    //外部中断初始化
     SDRAM_Init();                   //初始化SDRAM
 	LCD_Init();			            //初始化LCD
-    
+    Gizwits_Init();                 //协议初始化
+	
     POINT_COLOR = RED;
 	LCD_ShowString(30,10,200,16,16,"Apollo STM32F4/F7");	
 	LCD_ShowString(30,30,200,16,16,"UCOSIII Examp 6-3");
 	LCD_ShowString(30,50,200,16,16,"Task Round-robin");
 	LCD_ShowString(30,70,200,16,16,"ATOM@ALIENTEK");
 	LCD_ShowString(30,90,200,16,16,"2016/7/25");
+	printf("KEY1:AirLink连接模式\t KEY_UP:复位\r\n\r\n"); 
+	
 	OSInit(&err);		            //初始化UCOSIII
 	OS_CRITICAL_ENTER();//进入临界区
 	//创建开始任务
@@ -153,7 +189,21 @@ void start_task(void *p_arg)
                  (OS_TICK	  )10,	//时间片长度10ms						
                  (void   	* )0,				
                  (OS_OPT      )OS_OPT_TASK_STK_CHK|OS_OPT_TASK_STK_CLR|OS_OPT_TASK_SAVE_FP, 
-                 (OS_ERR 	* )&err);			 
+                 (OS_ERR 	* )&err);	
+	//创建TASK3任务
+	OSTaskCreate((OS_TCB 	* )&Task3_TaskTCB,		
+				 (CPU_CHAR	* )"task3 task", 		
+                 (OS_TASK_PTR )task3_task, 			
+                 (void		* )0,					
+                 (OS_PRIO	  )TASK3_TASK_PRIO,     	
+                 (CPU_STK   * )&TASK3_TASK_STK[0],	
+                 (CPU_STK_SIZE)TASK3_STK_SIZE/10,	
+                 (CPU_STK_SIZE)TASK3_STK_SIZE,		
+                 (OS_MSG_QTY  )0,					
+                 (OS_TICK	  )10,	//时间片长度10ms						
+                 (void   	* )0,				
+                 (OS_OPT      )OS_OPT_TASK_STK_CHK|OS_OPT_TASK_STK_CLR|OS_OPT_TASK_SAVE_FP, 
+                 (OS_ERR 	* )&err);
 	OS_CRITICAL_EXIT();	//退出临界区
 	OSTaskDel((OS_TCB*)0,&err);	//删除start_task任务自身
 }
@@ -174,9 +224,9 @@ void task1_task(void *p_arg)
 		task1_num++;	//任务1执行次数加1 注意task1_num1加到255的时候会清零！！
 		LCD_ShowxNum(110,130,task1_num,3,16,0x80);	//显示任务执行次数
 		//for(i=0;i<10;i++) 
-		printf("Task1: %d\r\n",task1_num);
-		LED0_Toggle;
-		OSTimeDlyHMSM(0,0,1,0,OS_OPT_TIME_HMSM_STRICT,&err); //延时1s
+		//printf("Task1: %d\r\n",task1_num);
+		//LED0_Toggle;
+		OSTimeDlyHMSM(0,0,5,0,OS_OPT_TIME_HMSM_STRICT,&err); //延时1s
 	}
 }
 
@@ -195,9 +245,53 @@ void task2_task(void *p_arg)
 		task2_num++;	//任务2执行次数加1 注意task1_num2加到255的时候会清零！！
 		LCD_ShowxNum(110,150,task2_num,3,16,0x80);  //显示任务执行次数
 		//for(i=0;i<20;i++) 
-		printf("Task2: %d\r\n",task2_num);
-		LED1_Toggle;
-		OSTimeDlyHMSM(0,0,0,1,OS_OPT_TIME_HMSM_STRICT,&err); //延时1s
+		//printf("Task2: %d\r\n",task2_num);
+		//LED1_Toggle;
+		OSTimeDlyHMSM(0,0,5,0,OS_OPT_TIME_HMSM_STRICT,&err); //延时1s
 	}
 }
 
+//task2任务函数
+void task3_task(void *p_arg)
+{
+	u8 task3_num=0;
+	u8 key;
+	OS_ERR err;
+	p_arg = p_arg;
+	
+	POINT_COLOR = RED;
+	LCD_ShowString(30,170,110,16,16,"Task3 Run:000");
+	POINT_COLOR = BLUE;
+	//OSTaskSuspend((OS_TCB *)&Task1_TaskTCB,&err);	//任务1挂起
+	//OSTaskSuspend((OS_TCB *)&Task2_TaskTCB,&err);	//任务2挂起
+	
+	 while(1)
+    {
+		task3_num++;	//任务3执行次数
+		LCD_ShowxNum(110,170,task3_num,3,16,0x80);  //显示任务执行次数
+		
+        userHandle();//用户采集
+         
+        gizwitsHandle((dataPoint_t *)&currentDataPoint);//协议处理
+ 		
+	    key = KEY_Scan(0);
+		if(key==KEY1_PRES)//KEY1按键
+		{
+			//OSTaskSuspend((OS_TCB *)&Task1_TaskTCB,&err);	//任务1挂起
+			//OSTaskSuspend((OS_TCB *)&Task2_TaskTCB,&err);	//任务2挂起
+			
+			printf("WIFI进入AirLink连接模式\r\n");
+			gizwitsSetMode(WIFI_AIRLINK_MODE);//Air-link模式接入
+			
+			//OSTaskResume((OS_TCB *)&Task1_TaskTCB,&err);	//任务1恢复
+			//OSTaskResume((OS_TCB *)&Task2_TaskTCB,&err);	//任务2恢复
+		}			
+		if(key==WKUP_PRES)//KEY_UP按键
+		{  
+			printf("WIFI复位，请重新配置连接\r\n");
+			gizwitsSetMode(WIFI_RESET_MODE);//WIFI复位
+		}      
+		OSTimeDlyHMSM(0,0,0,500,OS_OPT_TIME_HMSM_STRICT,&err); //延时1s
+		//LED0_Toggle;
+	}  
+}

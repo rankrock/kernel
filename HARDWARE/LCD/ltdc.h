@@ -70,4 +70,5 @@ void LTDC_Layer_Window_Config(u8 layerx,u16 sx,u16 sy,u16 width,u16 height);//LT
 void LTDC_Layer_Parameter_Config(u8 layerx,u32 bufaddr,u8 pixformat,u8 alpha,u8 alpha0,u8 bfac1,u8 bfac2,u32 bkcolor);//LTDC基本参数设置
 u16 LTDC_PanelID_Read(void);				//LCD ID读取函数
 void LTDC_Init(void);						//LTDC初始化函数
+
 #endif 

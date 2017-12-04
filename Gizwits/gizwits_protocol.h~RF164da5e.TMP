@@ -24,8 +24,8 @@
 #include <string.h>
 #include "gizwits_product.h"
 
-#define typedef_t  __packed typedef 
-
+//#define typedef_t __packed typedef
+#define typedef_t  typedef	
 
 /** WiFi模组配置参数*/
 typedef enum
@@ -66,7 +66,7 @@ typedef_t struct {
 }moduleStatusInfo_t;                                
 
 /** 协议网络时间结构体 */
-typedef_t struct
+typedef_t __packed struct
 {
     uint16_t year;
     uint8_t month;
@@ -78,7 +78,7 @@ typedef_t struct
 }protocolTime_t;
 
 /** 协议命令码 */                                   
-typedef_t enum                               
+typedef_t __packed enum                               
 {                                                   
     CMD_GET_DEVICE_INTO             = 0x01,         ///< 命令字，对应协议：4.1 WiFi模组请求设备信息 中 WiFi模组发送
     ACK_GET_DEVICE_INFO             = 0x02,         ///< 命令字，对应协议：4.1 WiFi模组请求设备信息 中 设备MCU回复
@@ -118,7 +118,7 @@ typedef_t enum
 } PROTOCOL_CMDTYPE;
 
 /** 协议标准头结构体 */
-typedef_t struct
+typedef_t __packed struct
 {
     uint8_t                 head[2];                ///< 包头(header)固定为0xFFFF
     uint16_t                len;                    ///< 长度(len)是指从cmd 开始到整个数据包结束所占用的字节数
@@ -128,7 +128,7 @@ typedef_t struct
 } protocolHead_t;
 
 /** 4.1 WiFi模组请求设备信息 协议结构体 */
-typedef_t struct
+typedef_t __packed struct
 {
     protocolHead_t          head;                   ///< 协议标准头结构体
     uint8_t                 protocolVer[8];         ///< 协议版本号
@@ -143,14 +143,14 @@ typedef_t struct
 } protocolDeviceInfo_t;
 
 /** 协议通用数据帧(4.2、4.4、4.6、4.9、4.10) 协议结构体 */
-typedef_t struct
+typedef_t __packed struct
 {
     protocolHead_t          head;                   ///< 协议标准头结构体
     uint8_t                 sum;                    ///< 检验和
 } protocolCommon_t;
 
 /** 4.3 设备MCU通知WiFi模组进入配置模式 协议结构体 */
-typedef_t struct
+typedef_t __packed struct
 {
     protocolHead_t          head;                   ///< 协议标准头结构体
     uint8_t                 cfgMode;                ///< 配置参数
@@ -158,7 +158,7 @@ typedef_t struct
 } protocolCfgMode_t;
 
 /** 4.13 MCU请求获取网络时间 协议结构体 */
-typedef_t struct
+typedef_t __packed struct
 {
     protocolHead_t          head;                   ///< 协议标准头结构体
     uint8_t                 time[7];                ///< 硬件版本号
@@ -196,7 +196,7 @@ typedef struct
 } protocolWifiStatus_t;
 
 /** 非法报文类型*/  
-typedef_t enum
+typedef_t __packed enum
 {
     ERROR_ACK_SUM = 0x01,                           ///< 校验错误
     ERROR_CMD     = 0x02,                           ///< 命令码错误
@@ -204,7 +204,7 @@ typedef_t enum
 } errorPacketsType_t;
 
 /** 4.7 非法消息通知 协议结构体*/
-typedef_t struct
+typedef_t __packed struct
 {
     protocolHead_t          head;                   ///< 协议标准头结构体
     uint8_t                 error;                  ///< 错误值
@@ -213,14 +213,14 @@ typedef_t struct
 
 
 /** P0报文标准头 */
-typedef_t struct
+typedef_t __packed struct
 {
     protocolHead_t          head;                   ///< 协议标准头结构体
     uint8_t                 action;                 ///< p0 命令位
 } protocolP0Head_t;
 
 /** 环形缓冲区数据结构 */
-typedef_t struct {
+typedef_t __packed struct {
     size_t rbCapacity;
     uint8_t  *rbHead;
     uint8_t  *rbTail;
@@ -287,28 +287,28 @@ typedef enum
 
 
 /** 用户区设备状态结构体*/
-typedef_t struct {
+typedef_t __packed struct {
   bool valueLED_OnOff;
 } dataPoint_t;
 
 /** 对应协议“4.10 WiFi模组控制设备”中的标志位"attr_flags" */ 
-typedef_t struct {
+typedef_t __packed struct {
   uint8_t flagLED_OnOff:1;
 } attrFlags_t;
 
 /** 对应协议“4.10 WiFi模组控制设备”中的数据值"attr_vals" */
-typedef_t struct {
+typedef_t __packed struct {
   uint8_t wBitBuf[COUNT_W_BIT];
 } attrVals_t;
 
 /** 对应协议“4.10 WiFi模组控制设备”中“P0协议区”的标志位"attr_flags(1B)" + 数据值"attr_vals(6B)" */ 
-typedef_t struct {
+typedef_t __packed struct {
     attrFlags_t attrFlags;
     attrVals_t  attrVals;
 }gizwitsIssued_t;
 
 /** 对应协议“4.9 设备MCU向WiFi模组主动上报当前状态”中的设备状态"dev_status(11B)" */ 
-typedef_t struct {
+typedef_t __packed struct {
   uint8_t wBitBuf[COUNT_W_BIT];
 
 
@@ -330,18 +330,18 @@ typedef enum
 
                                                                                        
 /** 事件队列结构体 */                               
-typedef_t struct {                           
+typedef_t __packed struct {                           
     uint8_t num;                                    ///< 队列成员个数
     uint8_t event[EVENT_TYPE_MAX];                  ///< 队列成员事件内容
 }eventInfo_t;                                
  
 
 /** 对应协议“4.9 设备MCU向WiFi模组主动上报当前状态” 中的 设备状态位"dev_status(11B)"  */ 
-typedef_t struct {                           
+typedef_t __packed struct {                           
     devStatus_t devStatus;                          ///< 作用：用来存放待上报的设备状态数据
 }gizwitsReport_t;
 /** 重发机制结构体 */
-typedef_t struct {
+typedef_t __packed struct {
     uint8_t                 num;                    ///< 重发次数
     uint8_t                 flag;                   ///< 1,表示有需要等待的ACK;0,表示无需要等待的ACK
     uint8_t                 buf[MAX_PACKAGE_LEN];   ///< 重发数据缓冲区
@@ -350,7 +350,7 @@ typedef_t struct {
 } protocolWaitAck_t;
 
 /** 4.8 WiFi模组读取设备的当前状态 设备MCU回复结构体 */
-typedef_t struct
+typedef_t __packed struct
 {
     protocolHead_t          head;                   ///< 协议标准头结构体
     uint8_t                 action;                 ///< p0 命令位
@@ -359,7 +359,7 @@ typedef_t struct
 } protocolReport_t;
 
 /** 协议处理总结构体 */
-typedef_t struct
+typedef_t __packed struct
 {
     uint8_t issuedFlag;                             ///< 保存对应的 p0命令类型
     uint8_t protocolBuf[MAX_PACKAGE_LEN];           ///< 协议报文存储区
@@ -392,10 +392,4 @@ int32_t gizwitsPassthroughData(uint8_t * data, uint32_t len);
 
 int32_t gizPutData(uint8_t *buf, uint32_t len);
 
-
-/**@name Gizwits 用户API接口
-* @{
-*/
-int8_t gizwitsEventProcess(eventInfo_t *info, uint8_t *data, uint32_t len);
-/**@} */
 #endif

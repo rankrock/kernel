@@ -19,6 +19,7 @@
 #include "gizwits_protocol.h"
 #include "led.h"
 #include "usart3.h"
+#include "includes.h"
 
 /**@} */
 /**@name Gizwits 用户API接口
@@ -153,7 +154,9 @@ uint32_t gizGetTimerCount(void)
 */
 void TIMER_IRQ_FUN(void)
 {
-  gizTimerMs();
+	OSIntEnter();
+	gizTimerMs();
+	OSIntExit();
 }
 
 /**
@@ -165,9 +168,11 @@ void TIMER_IRQ_FUN(void)
 */
 void UART_IRQ_FUN(void)
 {
-  uint8_t value = 0;
-  //value = USART_ReceiveData(USART2);//STM32 test demo
-  gizPutData(&value, 1);
+	uint8_t value = 0;
+	OSIntEnter();
+	//value = USART_ReceiveData(USART2);//STM32 test demo
+	gizPutData(&value, 1);
+	OSIntExit();
 }
 
 

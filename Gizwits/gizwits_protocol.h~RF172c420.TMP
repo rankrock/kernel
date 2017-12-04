@@ -24,7 +24,7 @@
 #include <string.h>
 #include "gizwits_product.h"
 
-#define typedef_t  __packed typedef 
+#define typedef_t __packed typedef
 
 
 /** WiFi模组配置参数*/
@@ -392,10 +392,4 @@ int32_t gizwitsPassthroughData(uint8_t * data, uint32_t len);
 
 int32_t gizPutData(uint8_t *buf, uint32_t len);
 
-
-/**@name Gizwits 用户API接口
-* @{
-*/
-int8_t gizwitsEventProcess(eventInfo_t *info, uint8_t *data, uint32_t len);
-/**@} */
 #endif

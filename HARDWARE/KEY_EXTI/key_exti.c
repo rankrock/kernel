@@ -3,6 +3,8 @@
 #include "led.h"
 #include "key.h"
 #include "gizwits_product.h" 
+#include "includes.h"
+
 //////////////////////////////////////////////////////////////////////////////////	 
 //本程序只供学习使用，未经作者许可，不得用于其它任何用途
 //ALIENTEK STM32F7开发板
@@ -59,22 +61,30 @@ void KEY_EXTI_Init(void)
 //中断服务函数
 void EXTI0_IRQHandler(void)
 {
+	OSIntEnter();
     HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_0);   //调用中断处理公用函数
+	OSIntExit();
 }
 
 void EXTI2_IRQHandler(void)
 {
+	OSIntEnter();
     HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_2);   //调用中断处理公用函数
+	OSIntExit();
 }
 
 void EXTI3_IRQHandler(void)
 {
+	OSIntEnter();
     HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_3);   //调用中断处理公用函数
+	OSIntExit();
 }
 
 void EXTI15_10_IRQHandler(void)
 {
+	OSIntEnter();
     HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_13);  //调用中断处理公用函数
+	OSIntExit();
 }
 
 //中断服务程序中需要做的事情

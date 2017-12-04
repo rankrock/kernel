@@ -4,14 +4,15 @@
 #include "key.h"
 #include "key_exti.h"
 #include "led.h"
-#include "lcd.h"
+#include "tftlcd.h"
 #include "ltdc.h"
 #include "sdram.h"
 #include "mpu.h"
 #include "includes.h"
 #include "timer.h"
-#include "usart3.h"
-#include "gizwits_product.h" 
+//#include "gizwits_product.h" 
+#include "Gizwits_user.h"
+
 /************************************************
  ALIENTEK 阿波罗STM32F7开发板 UCOSIII实验
  例6-3 UCOSIII 时间片轮转调度
@@ -23,11 +24,7 @@
  优先级2：定时任务 OS_TmrTask()
  优先级OS_CFG_PRIO_MAX-2：统计任务 OS_StatTask()
  优先级OS_CFG_PRIO_MAX-1：空闲任务 OS_IdleTask()
- 技术支持：www.openedv.com
- 淘宝店铺：http://eboard.taobao.com 
- 关注微信公众平台微信号："正点原子"，免费获取STM32资料。
- 广州市星翼电子科技有限公司  
- 作者：正点原子 @ALIENTEK
+
 ************************************************/
 
 //task start
@@ -37,57 +34,7 @@ OS_TCB StartTaskTCB;					//任务控制块
 CPU_STK START_TASK_STK[START_STK_SIZE];	//任务堆栈	
 void start_task(void *p_arg);			//任务函数
 
-//task1
-#define TASK1_TASK_PRIO		4			//任务优先级
-#define TASK1_STK_SIZE 		128			//任务堆栈大小
-OS_TCB Task1_TaskTCB;					//任务控制块
-CPU_STK TASK1_TASK_STK[TASK1_STK_SIZE]; //任务堆栈	
-void task1_task(void *p_arg);
 
-//task2
-#define TASK2_TASK_PRIO		4            //任务优先级
-#define TASK2_STK_SIZE 		128          //任务堆栈大小	
-OS_TCB Task2_TaskTCB;                    //任务控制块
-CPU_STK TASK2_TASK_STK[TASK2_STK_SIZE];	 //任务堆栈	
-void task2_task(void *p_arg);            //任务函数
-
-//task3
-#define TASK3_TASK_PRIO		4            //任务优先级
-#define TASK3_STK_SIZE 		128          //任务堆栈大小	
-OS_TCB Task3_TaskTCB;                    //任务控制块
-CPU_STK TASK3_TASK_STK[TASK3_STK_SIZE];	 //任务堆栈	
-void task3_task(void *p_arg);            //任务函数
-
-// 机智云 ----
-/* 用户区当前设备状态结构体*/
-dataPoint_t currentDataPoint;
-
-//Gizwits协议初始化
-void Gizwits_Init(void)
-{
-	TIM3_Init(10-1,10800-1); //1MS系统定时 
-	uart3_init(9600);//WIFI初始化 
-	memset((uint8_t*)&currentDataPoint, 0, sizeof(dataPoint_t));//设备状态结构体初始化
-	gizwitsInit();//缓冲区初始化
-	
-}
-
-//数据采集
-void userHandle(void)
-{
-   	u8 led1;
-	
-    led1 = HAL_GPIO_ReadPin(GPIOB,GPIO_PIN_0);//判断当前LED1开关量
-	if(led1==0)
-	{
-	   currentDataPoint. valueLED_OnOff= 1;
-	}
-	else
-	{
-	   currentDataPoint. valueLED_OnOff= 0;
-	}  
-}
-// ----------
 
 int main(void)
 {
@@ -95,20 +42,21 @@ int main(void)
 	CPU_SR_ALLOC();
     
     Write_Through();                //透写
-	MPU_Memory_Protection();		//保护相关存储区域
+		MPU_Memory_Protection();		//保护相关存储区域
     Cache_Enable();                 //打开L1-Cache
     HAL_Init();				        //初始化HAL库
     Stm32_Clock_Init(432,25,2,9);   //设置时钟,216Mhz 
     delay_init(216);                //延时初始化
-	uart_init(115200);		        //串口初始化
+		uart_init(115200);		        //串口初始化
     LED_Init();                     //初始化LED
-	KEY_Init();     				//按键初始化
-	//KEY_EXTI_Init();                    //外部中断初始化
+		KEY_Init();     				//按键初始化
+		//KEY_EXTI_Init();                    //外部中断初始化
     SDRAM_Init();                   //初始化SDRAM
-	LCD_Init();			            //初始化LCD
-    Gizwits_Init();                 //协议初始化
+		TFTLCD_Init();			            //初始化LCD
+    //Gizwits_Init();                 //协议初始化
 	
     POINT_COLOR = RED;
+//	LCD_ShowString( x, y,width,height,size,u8 *p);
 	LCD_ShowString(30,10,200,16,16,"Apollo STM32F4/F7");	
 	LCD_ShowString(30,30,200,16,16,"UCOSIII Examp 6-3");
 	LCD_ShowString(30,50,200,16,16,"Task Round-robin");
@@ -139,159 +87,10 @@ int main(void)
 	} 
 }
 
-//开始任务函数
-void start_task(void *p_arg)
-{
-	OS_ERR err;
-	CPU_SR_ALLOC();
-	p_arg = p_arg;
-	
-	CPU_Init();
-#if OS_CFG_STAT_TASK_EN > 0u
-   OSStatTaskCPUUsageInit(&err);  	//统计任务                
-#endif
-	
-#ifdef CPU_CFG_INT_DIS_MEAS_EN		//如果使能了测量中断关闭时间
-    CPU_IntDisMeasMaxCurReset();	
-#endif
-	
-#if	OS_CFG_SCHED_ROUND_ROBIN_EN  //当使用时间片轮转的时候
-	 //使能时间片轮转调度功能,设置默认的时间片长度
-	OSSchedRoundRobinCfg(DEF_ENABLED,5,&err);  
-#endif		
-	
-	OS_CRITICAL_ENTER();	//进入临界区
-	//创建TASK1任务
-	OSTaskCreate((OS_TCB 	* )&Task1_TaskTCB,		
-				 (CPU_CHAR	* )"Task1 task", 		
-                 (OS_TASK_PTR )task1_task, 			
-                 (void		* )0,					
-                 (OS_PRIO	  )TASK1_TASK_PRIO,     
-                 (CPU_STK   * )&TASK1_TASK_STK[0],	
-                 (CPU_STK_SIZE)TASK1_STK_SIZE/10,	
-                 (CPU_STK_SIZE)TASK1_STK_SIZE,		
-                 (OS_MSG_QTY  )0,					
-                 (OS_TICK	  )10,  //时间片长度10ms					
-                 (void   	* )0,					
-                 (OS_OPT      )OS_OPT_TASK_STK_CHK|OS_OPT_TASK_STK_CLR|OS_OPT_TASK_SAVE_FP,
-                 (OS_ERR 	* )&err);				
-				 
-	//创建TASK2任务
-	OSTaskCreate((OS_TCB 	* )&Task2_TaskTCB,		
-				 (CPU_CHAR	* )"task2 task", 		
-                 (OS_TASK_PTR )task2_task, 			
-                 (void		* )0,					
-                 (OS_PRIO	  )TASK2_TASK_PRIO,     	
-                 (CPU_STK   * )&TASK2_TASK_STK[0],	
-                 (CPU_STK_SIZE)TASK2_STK_SIZE/10,	
-                 (CPU_STK_SIZE)TASK2_STK_SIZE,		
-                 (OS_MSG_QTY  )0,					
-                 (OS_TICK	  )10,	//时间片长度10ms						
-                 (void   	* )0,				
-                 (OS_OPT      )OS_OPT_TASK_STK_CHK|OS_OPT_TASK_STK_CLR|OS_OPT_TASK_SAVE_FP, 
-                 (OS_ERR 	* )&err);	
-	//创建TASK3任务
-	OSTaskCreate((OS_TCB 	* )&Task3_TaskTCB,		
-				 (CPU_CHAR	* )"task3 task", 		
-                 (OS_TASK_PTR )task3_task, 			
-                 (void		* )0,					
-                 (OS_PRIO	  )TASK3_TASK_PRIO,     	
-                 (CPU_STK   * )&TASK3_TASK_STK[0],	
-                 (CPU_STK_SIZE)TASK3_STK_SIZE/10,	
-                 (CPU_STK_SIZE)TASK3_STK_SIZE,		
-                 (OS_MSG_QTY  )0,					
-                 (OS_TICK	  )10,	//时间片长度10ms						
-                 (void   	* )0,				
-                 (OS_OPT      )OS_OPT_TASK_STK_CHK|OS_OPT_TASK_STK_CLR|OS_OPT_TASK_SAVE_FP, 
-                 (OS_ERR 	* )&err);
-	OS_CRITICAL_EXIT();	//退出临界区
-	OSTaskDel((OS_TCB*)0,&err);	//删除start_task任务自身
-}
 
 
-//task1任务函数
-void task1_task(void *p_arg)
-{
-	u8 task1_num=0;
-	OS_ERR err;
-	p_arg = p_arg;
-	 
-	POINT_COLOR = RED;
-	LCD_ShowString(30,130,110,16,16,"Task1 Run:000");
-	POINT_COLOR = BLUE;
-	while(1)
-	{
-		task1_num++;	//任务1执行次数加1 注意task1_num1加到255的时候会清零！！
-		LCD_ShowxNum(110,130,task1_num,3,16,0x80);	//显示任务执行次数
-		//for(i=0;i<10;i++) 
-		//printf("Task1: %d\r\n",task1_num);
-		//LED0_Toggle;
-		OSTimeDlyHMSM(0,0,5,0,OS_OPT_TIME_HMSM_STRICT,&err); //延时1s
-	}
-}
 
-//task2任务函数
-void task2_task(void *p_arg)
-{
-	u8 task2_num=0;
-	OS_ERR err;
-	p_arg = p_arg;
-	
-	POINT_COLOR = RED;
-	LCD_ShowString(30,150,110,16,16,"Task2 Run:000");
-	POINT_COLOR = BLUE;
-	while(1)
-	{
-		task2_num++;	//任务2执行次数加1 注意task1_num2加到255的时候会清零！！
-		LCD_ShowxNum(110,150,task2_num,3,16,0x80);  //显示任务执行次数
-		//for(i=0;i<20;i++) 
-		//printf("Task2: %d\r\n",task2_num);
-		//LED1_Toggle;
-		OSTimeDlyHMSM(0,0,5,0,OS_OPT_TIME_HMSM_STRICT,&err); //延时1s
-	}
-}
 
-//task2任务函数
-void task3_task(void *p_arg)
-{
-	u8 task3_num=0;
-	u8 key;
-	OS_ERR err;
-	p_arg = p_arg;
-	
-	POINT_COLOR = RED;
-	LCD_ShowString(30,170,110,16,16,"Task3 Run:000");
-	POINT_COLOR = BLUE;
-	//OSTaskSuspend((OS_TCB *)&Task1_TaskTCB,&err);	//任务1挂起
-	//OSTaskSuspend((OS_TCB *)&Task2_TaskTCB,&err);	//任务2挂起
-	
-	 while(1)
-    {
-		task3_num++;	//任务3执行次数
-		LCD_ShowxNum(110,170,task3_num,3,16,0x80);  //显示任务执行次数
-		
-        userHandle();//用户采集
-         
-        gizwitsHandle((dataPoint_t *)&currentDataPoint);//协议处理
- 		
-	    key = KEY_Scan(0);
-		if(key==KEY1_PRES)//KEY1按键
-		{
-			//OSTaskSuspend((OS_TCB *)&Task1_TaskTCB,&err);	//任务1挂起
-			//OSTaskSuspend((OS_TCB *)&Task2_TaskTCB,&err);	//任务2挂起
-			
-			printf("WIFI进入AirLink连接模式\r\n");
-			gizwitsSetMode(WIFI_AIRLINK_MODE);//Air-link模式接入
-			
-			//OSTaskResume((OS_TCB *)&Task1_TaskTCB,&err);	//任务1恢复
-			//OSTaskResume((OS_TCB *)&Task2_TaskTCB,&err);	//任务2恢复
-		}			
-		if(key==WKUP_PRES)//KEY_UP按键
-		{  
-			printf("WIFI复位，请重新配置连接\r\n");
-			gizwitsSetMode(WIFI_RESET_MODE);//WIFI复位
-		}      
-		OSTimeDlyHMSM(0,0,0,500,OS_OPT_TIME_HMSM_STRICT,&err); //延时1s
-		//LED0_Toggle;
-	}  
-}
+
+
+

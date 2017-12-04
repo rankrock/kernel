@@ -90,7 +90,6 @@ static int32_t rbCanWrite(rb_t *rb)
         GIZWITS_LOG("ERROR: input rb is NULL\n");
         return -1;
     }
-
     return rbCapacity(rb) - rbCanRead(rb);
 }
 
@@ -143,19 +142,22 @@ static int32_t rbWrite(rb_t *rb, const void *data, size_t count)
 
     if(NULL == rb)
     {
-        GIZWITS_LOG("ERROR: rb is empty \n");
+		puts("rbWrite : NULL == rb");
+        GIZWITS_LOG("ERROR: rb is empty \r\n");
         return -1;
     }
 
     if(NULL == data)
     {
-        GIZWITS_LOG("ERROR: data is empty \n");
+		puts("rbWrite : NULL == data");
+        GIZWITS_LOG("ERROR: data is empty \r\n");
         return -1;
     }
 
     if (count >= rbCanWrite(rb))
     {
-        GIZWITS_LOG("ERROR: no memory %d \n", rbCanWrite(rb));
+		puts("rbWrite : count >= rbCanWrite(rb)");
+        GIZWITS_LOG("ERROR: no memory %d \r\n", rbCanWrite(rb));  // stop 1
         return -1;
     }
 
@@ -202,14 +204,16 @@ int32_t gizPutData(uint8_t *buf, uint32_t len)
 
     if(NULL == buf)
     {
-        GIZWITS_LOG("ERROR: gizPutData buf is empty \n");
+		puts("gizPutData : NULL == rb");
+        GIZWITS_LOG("ERROR: gizPutData buf is empty \r\n");
         return -1;
     }
 
-    count = rbWrite(&pRb, buf, len);
+    count = rbWrite(&pRb, buf, len);    // up stop 1
     if(count != len)
     {
-        GIZWITS_LOG("ERROR: Failed to rbWrite \n");
+		puts("gizPutData : count != len");
+        GIZWITS_LOG("ERROR: Failed to rbWrite \r\n");   // stop 2
         return -1;
     }
 
@@ -607,7 +611,7 @@ static int8_t ICACHE_FLASH_ATTR gizDataPoint2Event(gizwitsIssued_t *issuedData, 
 static int8_t ICACHE_FLASH_ATTR gizCheckReport(dataPoint_t *cur, dataPoint_t *last)
 {
     int8_t ret = 0;
-    static uint32_t lastReportTime = 0;
+    //static uint32_t lastReportTime = 0;
 
     if((NULL == cur) || (NULL == last))
     {
@@ -1158,7 +1162,7 @@ static int32_t gizProtocolErrorCmd(protocolHead_t *head,errorPacketsType_t errno
 */
 static int8_t gizProtocolNTP(protocolHead_t *head)
 {
-    int32_t ret = 0;
+    //int32_t ret = 0;
     
     protocolUTT_t *UTTInfo = (protocolUTT_t *)head;
     
@@ -1508,7 +1512,7 @@ void gizwitsGetNTP(void)
 int32_t gizwitsHandle(dataPoint_t *currentData)
 {
     int8_t ret = 0;
-    uint16_t i = 0;
+    //uint16_t i = 0;
     uint8_t ackData[RB_MAX_LEN];
     uint16_t protocolLen = 0;
     uint32_t ackLen = 0;

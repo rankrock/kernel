@@ -1,5 +1,6 @@
 #include "usart3.h"
 #include "gizwits_product.h"
+#include "includes.h"
 
 //////////////////////////////////////////////////////////////////////////////////	 
 //本程序只供学习使用，未经作者许可，不得用于其它任何用途
@@ -23,11 +24,13 @@ UART_HandleTypeDef UART3_Handler;                         //UART句柄
 void USART3_IRQHandler(void)
 {
 	  u8 res;
+	  OSIntEnter();
 	  if((__HAL_UART_GET_FLAG(&UART3_Handler,UART_FLAG_RXNE)!=RESET))
 	  {
 		  res = UART3_Handler.Instance->RDR;
 		  gizPutData(&res, 1);//数据写入到缓冲区	
 	  }
+	  OSIntExit();
 }
 
 

@@ -1,6 +1,6 @@
 #include "timer.h"
 #include "gizwits_product.h"
-
+#include "includes.h"
 //////////////////////////////////////////////////////////////////////////////////	 
 //本程序只供学习使用，未经作者许可，不得用于其它任何用途
 //ALIENTEK STM32F7开发板
@@ -49,6 +49,7 @@ void HAL_TIM_Base_MspInit(TIM_HandleTypeDef *htim)
 //定时器3中断服务函数
 void TIM3_IRQHandler(void)
 {
+	OSIntEnter();
     if(__HAL_TIM_GET_FLAG(&TIM3_Handler, TIM_FLAG_UPDATE) != RESET)
      {
 		if(__HAL_TIM_GET_IT_SOURCE(&TIM3_Handler, TIM_IT_UPDATE) !=RESET)
@@ -58,6 +59,7 @@ void TIM3_IRQHandler(void)
 			
 		}
      }
+	 OSIntExit();
      
 }
 

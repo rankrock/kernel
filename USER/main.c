@@ -50,7 +50,7 @@ int main(void)
 		uart_init(115200);		        //串口初始化
     LED_Init();                     //初始化LED
 		KEY_Init();     				//按键初始化
-		//KEY_EXTI_Init();                    //外部中断初始化
+		KEY_EXTI_Init();                    //外部中断初始化
     SDRAM_Init();                   //初始化SDRAM
 		TFTLCD_Init();			            //初始化LCD
     //Gizwits_Init();                 //协议初始化
@@ -62,7 +62,7 @@ int main(void)
 	LCD_ShowString(30,50,200,16,16,"Task Round-robin");
 	LCD_ShowString(30,70,200,16,16,"ATOM@ALIENTEK");
 	LCD_ShowString(30,90,200,16,16,"2016/7/25");
-	printf("KEY1:AirLink连接模式\t KEY_UP:复位\r\n\r\n"); 
+	//printf("KEY1:AirLink连接模式\t KEY_UP:复位\r\n\r\n"); 
 	
 	OSInit(&err);		            //初始化UCOSIII
 	OS_CRITICAL_ENTER();//进入临界区
@@ -82,9 +82,9 @@ int main(void)
                  (OS_ERR 	* )&err);				//存放该函数错误时的返回值
 	OS_CRITICAL_EXIT();	//退出临界区	 
 	OSStart(&err);      //开启UCOSIII
-    while(1)
-    {
-	} 
+								 
+    while(1);
+ 
 }
 
 

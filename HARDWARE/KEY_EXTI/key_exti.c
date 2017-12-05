@@ -1,22 +1,13 @@
+
+
 #include "key_exti.h"
 #include "delay.h"
 #include "led.h"
 #include "key.h"
 #include "gizwits_product.h" 
 #include "includes.h"
+#include "osTimer.h"
 
-//////////////////////////////////////////////////////////////////////////////////	 
-//本程序只供学习使用，未经作者许可，不得用于其它任何用途
-//ALIENTEK STM32F7开发板
-//外部中断驱动代码	   
-//正点原子@ALIENTEK
-//技术论坛:www.openedv.com
-//创建日期:2015/11/27
-//版本：V1.0
-//版权所有，盗版必究。
-//Copyright(C) 广州市星翼电子科技有限公司 2014-2024
-//All rights reserved									  
-////////////////////////////////////////////////////////////////////////////////// 	
 
 //外部中断初始化
 void KEY_EXTI_Init(void)
@@ -93,6 +84,8 @@ void EXTI15_10_IRQHandler(void)
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 {
     static u8 led0sta=1,led1sta=1;
+		OS_ERR err;
+	
     delay_ms(50);      //消抖
     switch(GPIO_Pin)
     {
@@ -103,17 +96,18 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
                 led0sta=!led1sta;
                 LED1(led1sta);
                 LED0(led0sta);
-				printf("WIFI复位，请重新配置连接\r\n");
-				gizwitsSetMode(WIFI_RESET_MODE);//WIFI复位
+								//printf("WIFI复位，请重新配置连接\r\n");
+								//gizwitsSetMode(WIFI_RESET_MODE);//WIFI复位
             }
             break;
         case GPIO_PIN_2:
             if(KEY1==0) 	//控制LED1翻转	
             {
                 led1sta=!led1sta;
-                LED1(led1sta);	
-				printf("WIFI进入AirLink连接模式\r\n");
-				gizwitsSetMode(WIFI_AIRLINK_MODE);//Air-link模式接入
+                LED1(led1sta);
+								OSTmrStop(&tmr2,OS_OPT_TMR_NONE,0,&err);	//关闭定时器1							
+								//printf("WIFI进入AirLink连接模式\r\n");
+								//gizwitsSetMode(WIFI_AIRLINK_MODE);//Air-link模式接入
             };
             break;
         case GPIO_PIN_3:
@@ -123,6 +117,7 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
                 led0sta=!led0sta;
                 LED1(led1sta);
                 LED0(led0sta); 
+								OSTmrStop(&tmr1,OS_OPT_TMR_NONE,0,&err);	//关闭定时器1			
             }
             break;
 
@@ -131,6 +126,8 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
             {
                 led0sta=!led0sta;
                 LED0(led0sta);
+								OSTmrStart(&tmr1,&err);	//开启定时器1
+								OSTmrStart(&tmr2,&err);	//开启定时器1
             }
             break;
     }

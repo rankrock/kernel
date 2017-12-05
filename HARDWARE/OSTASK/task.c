@@ -1,6 +1,4 @@
 
-
-#include "task.h"
 #include "includes.h"
 #include "sys.h"
 #include "tftlcd.h"
@@ -10,9 +8,14 @@
 #include "key_exti.h"
 #include "gizwits_product.h" 
 #include "Gizwits_user.h"
+#include "task.h"
+#include "osTimer.h"
 
 extern dataPoint_t currentDataPoint;
 
+OS_TMR 	tmr1;		//定时器1
+OS_TMR	tmr2;		//定时器2
+u16 task1_num=0,task2_num=0;
 
 //开始任务函数
 void start_task(void *p_arg)
@@ -35,6 +38,27 @@ void start_task(void *p_arg)
 	OSSchedRoundRobinCfg(DEF_ENABLED,5,&err);  
 #endif		
 	
+	// os_timer ---
+	//创建定时器1
+	OSTmrCreate((OS_TMR		*)&tmr1,		//定时器1
+                (CPU_CHAR	*)"tmr1",		//定时器名字
+                (OS_TICK	 )100,			//20*10=200ms
+                (OS_TICK	 )100,          //100*10=1000ms=1s
+                (OS_OPT		 )OS_OPT_TMR_PERIODIC, //周期模式
+                (OS_TMR_CALLBACK_PTR)tmr1_callback,//定时器1回调函数
+                (void	    *)0,			//参数为0
+                (OS_ERR	    *)&err);		//返回的错误码					
+	//创建定时器2
+	OSTmrCreate((OS_TMR		*)&tmr2,		
+                (CPU_CHAR	*)"tmr2",		
+                (OS_TICK	 )200,			//200*10=2000ms=2s
+                (OS_TICK	 )200,   					
+                (OS_OPT		 )OS_OPT_TMR_PERIODIC, 	//单次定时器
+                (OS_TMR_CALLBACK_PTR)tmr2_callback,	//定时器2回调函数
+                (void	    *)0,			
+                (OS_ERR	    *)&err);
+	
+	// task ---
 	OS_CRITICAL_ENTER();	//进入临界区
 	//创建TASK1任务
 	OSTaskCreate((OS_TCB 	* )&Task1_TaskTCB,		
@@ -79,15 +103,23 @@ void start_task(void *p_arg)
 //                 (void   	* )0,				
 //                 (OS_OPT      )OS_OPT_TASK_STK_CHK|OS_OPT_TASK_STK_CLR|OS_OPT_TASK_SAVE_FP, 
 //                 (OS_ERR 	* )&err);
+								 					 
 	OS_CRITICAL_EXIT();	//退出临界区
+								 
+	OSTmrStart(&tmr1,&err);	//开启定时器1
+	OSTmrStart(&tmr2,&err);	//开启定时器2		
+	//OSTmrStop(&tmr1,OS_OPT_TMR_NONE,0,&err);	//关闭定时器1
+	//OSTmrStop(&tmr2,OS_OPT_TMR_NONE,0,&err);	//关闭定时器2
+	
 	OSTaskDel((OS_TCB*)0,&err);	//删除start_task任务自身
+	
 }
 
 
 //task1任务函数
 void task1_task(void *p_arg)
 {
-	u8 task1_num=0;
+	//u8 task1_num=0;
 	OS_ERR err;
 	p_arg = p_arg;
 	 
@@ -96,19 +128,18 @@ void task1_task(void *p_arg)
 	POINT_COLOR = BLUE;
 	while(1)
 	{
-		task1_num++;	//任务1执行次数加1 注意task1_num1加到255的时候会清零！！
+		//task1_num++;	//任务1执行次数加1 注意task1_num1加到255的时候会清零！！
 		LCD_ShowxNum(110,130,task1_num,3,16,0x80);	//显示任务执行次数
-		//for(i=0;i<10;i++) 
 		printf("Task1: %d\r\n",task1_num);
 		//LED0_Toggle;
-		OSTimeDlyHMSM(0,0,0,200,OS_OPT_TIME_HMSM_STRICT,&err); //延时1s
+		OSTimeDlyHMSM(0,0,0,1000,OS_OPT_TIME_HMSM_STRICT,&err); //延时1s
 	}
 }
 
 //task2任务函数
 void task2_task(void *p_arg)
 {
-	u8 task2_num=0;
+	//u8 task2_num=0;
 	OS_ERR err;
 	p_arg = p_arg;
 	
@@ -117,12 +148,11 @@ void task2_task(void *p_arg)
 	POINT_COLOR = BLUE;
 	while(1)
 	{
-		task2_num++;	//任务2执行次数加1 注意task1_num2加到255的时候会清零！！
+		//task2_num++;	//任务2执行次数加1 注意task1_num2加到255的时候会清零！！
 		LCD_ShowxNum(110,150,task2_num,3,16,0x80);  //显示任务执行次数
-		//for(i=0;i<20;i++) 
 		printf("Task2: %d\r\n",task2_num);
 		//LED1_Toggle;
-		OSTimeDlyHMSM(0,0,0,200,OS_OPT_TIME_HMSM_STRICT,&err); //延时1s
+		OSTimeDlyHMSM(0,0,0,2000,OS_OPT_TIME_HMSM_STRICT,&err); //延时1s
 	}
 }
 
@@ -171,4 +201,11 @@ void task3_task(void *p_arg)
 		//LED0_Toggle;
 	}  
 }
+//
+
+
+
+
+
+
 

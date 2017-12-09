@@ -172,7 +172,12 @@ void  App_OS_TaskReturnHook (OS_TCB  *p_tcb)
 
 void  App_OS_IdleTaskHook (void)
 {
-
+	static int num;
+	num++;
+	if(num%2000000==0)
+	{
+		printf("Idle Task Running 2000000 times!\r\n"); 
+	}
 }
 
 

@@ -10,11 +10,16 @@
 #include "Gizwits_user.h"
 #include "task.h"
 #include "osTimer.h"
+#include "os_app_hooks.h"
 
 extern dataPoint_t currentDataPoint;
 
-OS_TMR 	tmr1;		//定时器1
-OS_TMR	tmr2;		//定时器2
+OS_TMR 	tmr1;		//定时器1，延时1S
+OS_TMR	tmr2;		//定时器2，延时2S
+
+OS_SEM  mysem;      //信号量
+OS_MUTEX mymutex;   //互斥信号量
+
 u16 task1_num=0,task2_num=0;
 
 //开始任务函数
@@ -37,6 +42,10 @@ void start_task(void *p_arg)
 	 //使能时间片轮转调度功能,设置默认的时间片长度
 	OSSchedRoundRobinCfg(DEF_ENABLED,5,&err);  
 #endif		
+
+#if OS_CFG_APP_HOOKS_EN //使用钩子函数
+	App_OS_SetAllHooks(); 
+#endif
 	
 	// os_timer ---
 	//创建定时器1
@@ -57,6 +66,16 @@ void start_task(void *p_arg)
                 (OS_TMR_CALLBACK_PTR)tmr2_callback,	//定时器2回调函数
                 (void	    *)0,			
                 (OS_ERR	    *)&err);
+
+	//semaphore ----
+	OSSemCreate((OS_SEM *)&mysem,      //信号量
+				(CPU_CHAR *)"mysem",   //信号量名
+				(OS_SEM_CTR)1,  	   //设置信号量的初始值，如果此值为 1，代表此信号量为二进制信号量，如果大于1的话就代表此信号量为计数型信号量
+				(OS_ERR *)&err);	   //返回的错误码	
+				
+	OSMutexCreate((OS_MUTEX *)&mymutex,
+				  (CPU_CHAR *)"mymutex",
+				  (OS_ERR *)&err);	   //返回的错误码	
 	
 	// task ---
 	OS_CRITICAL_ENTER();	//进入临界区
@@ -123,14 +142,21 @@ void task1_task(void *p_arg)
 	p_arg = p_arg;
 	 
 	POINT_COLOR = RED;
-	LCD_ShowString(30,130,110,16,16,"Task1 Run:000");
+	LCD_ShowString(30,130,110,16,16,"Task1 Run:00000");
 	POINT_COLOR = BLUE;
 	while(1)
 	{
+		//OSSemPend(&mysem,0,OS_OPT_PEND_BLOCKING,0,&err); // 请求信号量
+		OSMutexPend(&mymutex,0,OS_OPT_PEND_BLOCKING,0,&err);//请求互斥信号量
+		OSTaskSemPost(&Task2_TaskTCB,OS_OPT_POST_NONE,&err); // 使用系统内建信号量向任务 task2  发送信号量
+		
 		LCD_ShowxNum(110,130,task1_num,5,16,0x80);	//显示任务执行次数
 		printf("Task1: %d\r\n",task1_num);
+		OSMutexPost(&mymutex,OS_OPT_POST_NONE,&err);
+		//OSSched();
 		//LED0_Toggle;
 		OSTimeDlyHMSM(0,0,0,1000,OS_OPT_TIME_HMSM_STRICT,&err); //延时1s
+		//OSSemPost(&mysem,OS_OPT_POST_ALL,&err);//定时中断中发送信号量
 	}
 }
 
@@ -141,14 +167,21 @@ void task2_task(void *p_arg)
 	p_arg = p_arg;
 	
 	POINT_COLOR = RED;
-	LCD_ShowString(30,150,110,16,16,"Task2 Run:000");
+	LCD_ShowString(30,150,110,16,16,"Task2 Run:00000");
 	POINT_COLOR = BLUE;
 	while(1)
 	{
+		//OSSemPend(&mysem,0,OS_OPT_PEND_BLOCKING,0,&err); // 请求信号量
+		OSMutexPend(&mymutex,0,OS_OPT_PEND_BLOCKING,0,&err);//请求互斥信号量
+		OSTaskSemPost(&Task1_TaskTCB,OS_OPT_POST_NONE,&err); // 使用系统内建信号量向任务 task1  发送信号量
+		
 		LCD_ShowxNum(110,150,task2_num,5,16,0x80);  //显示任务执行次数
 		printf("Task2: %d\r\n",task2_num);
+		OSMutexPost(&mymutex,OS_OPT_POST_NONE,&err);
+		//OSSched();
 		//LED1_Toggle;
-		OSTimeDlyHMSM(0,0,0,2000,OS_OPT_TIME_HMSM_STRICT,&err); //延时1s
+		OSTimeDlyHMSM(0,0,0,1000,OS_OPT_TIME_HMSM_STRICT,&err); //延时2s
+		//OSSemPost(&mysem,OS_OPT_POST_ALL,&err);//定时中断中发送信号量
 	}
 }
 

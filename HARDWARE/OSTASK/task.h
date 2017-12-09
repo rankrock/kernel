@@ -4,7 +4,7 @@
 #include "includes.h"
 
 //task1
-#define TASK1_TASK_PRIO		6			//任务优先级
+#define TASK1_TASK_PRIO		5			//任务优先级
 #define TASK1_STK_SIZE 		128			//任务堆栈大小
 OS_TCB Task1_TaskTCB;					//任务控制块
 CPU_STK TASK1_TASK_STK[TASK1_STK_SIZE]; //任务堆栈	

@@ -119,7 +119,6 @@ void start_task(void *p_arg)
 //task1任务函数
 void task1_task(void *p_arg)
 {
-	//u8 task1_num=0;
 	OS_ERR err;
 	p_arg = p_arg;
 	 
@@ -128,8 +127,7 @@ void task1_task(void *p_arg)
 	POINT_COLOR = BLUE;
 	while(1)
 	{
-		//task1_num++;	//任务1执行次数加1 注意task1_num1加到255的时候会清零！！
-		LCD_ShowxNum(110,130,task1_num,3,16,0x80);	//显示任务执行次数
+		LCD_ShowxNum(110,130,task1_num,5,16,0x80);	//显示任务执行次数
 		printf("Task1: %d\r\n",task1_num);
 		//LED0_Toggle;
 		OSTimeDlyHMSM(0,0,0,1000,OS_OPT_TIME_HMSM_STRICT,&err); //延时1s
@@ -139,7 +137,6 @@ void task1_task(void *p_arg)
 //task2任务函数
 void task2_task(void *p_arg)
 {
-	//u8 task2_num=0;
 	OS_ERR err;
 	p_arg = p_arg;
 	
@@ -148,8 +145,7 @@ void task2_task(void *p_arg)
 	POINT_COLOR = BLUE;
 	while(1)
 	{
-		//task2_num++;	//任务2执行次数加1 注意task1_num2加到255的时候会清零！！
-		LCD_ShowxNum(110,150,task2_num,3,16,0x80);  //显示任务执行次数
+		LCD_ShowxNum(110,150,task2_num,5,16,0x80);  //显示任务执行次数
 		printf("Task2: %d\r\n",task2_num);
 		//LED1_Toggle;
 		OSTimeDlyHMSM(0,0,0,2000,OS_OPT_TIME_HMSM_STRICT,&err); //延时1s

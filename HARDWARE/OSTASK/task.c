@@ -4,6 +4,7 @@
 #include "tftlcd.h"
 #include "ltdc.h"
 #include "led.h"
+#include "adc.h"
 #include "key.h"
 #include "key_exti.h"
 #include "gizwits_product.h" 
@@ -11,6 +12,10 @@
 #include "task.h"
 #include "osTimer.h"
 #include "os_app_hooks.h"
+#include <stdio.h>
+#include <string.h>
+
+#define LIMITE(x,min,max) if(x<min) x=min;if(x>max) x=max;
 
 extern dataPoint_t currentDataPoint;
 
@@ -138,25 +143,50 @@ void start_task(void *p_arg)
 //task1任务函数
 void task1_task(void *p_arg)
 {
+	short temp; //温度
+	unsigned char hour,minute,second;
 	OS_ERR err;
 	p_arg = p_arg;
 	 
 	POINT_COLOR = RED;
-	LCD_ShowString(30,130,110,16,16,"Task1 Run:00000");
+	LCD_ShowString(30,130,200,16,16,"TEMPERATE: 00.00C");//先在固定位置显示小数点	 
+	LCD_ShowString(30,150,110,16,16,"Task1 Run:00000");
+	LCD_ShowString(30,170,110,16,16,"Run Time :00:00:00");
 	POINT_COLOR = BLUE;
 	while(1)
 	{
 		//OSSemPend(&mysem,0,OS_OPT_PEND_BLOCKING,0,&err); // 请求信号量
 		OSMutexPend(&mymutex,0,OS_OPT_PEND_BLOCKING,0,&err);//请求互斥信号量
 		OSTaskSemPost(&Task2_TaskTCB,OS_OPT_POST_NONE,&err); // 使用系统内建信号量向任务 task2  发送信号量
+
+		temp=Get_Temprate();	//得到温度值 
+		if(temp<0)
+		{
+			temp=-temp;
+			LCD_ShowString(30+10*8,130,16,16,16,"-");	    //显示负号
+		}else LCD_ShowString(30+10*8,130,16,16,16," ");		//无符号
+		LCD_ShowxNum(30+11*8,130,temp/100,2,16,0);			//显示整数部分
+		LCD_ShowxNum(30+14*8,130,temp%100,2,16,0);			//显示小数部分 
+
+		hour=task1_num/3600;
+		minute=(task1_num-hour*3600)/60;
+		second=(task1_num-hour*3600)%60;
 		
-		LCD_ShowxNum(110,130,task1_num,5,16,0x80);	//显示任务执行次数
+		LCD_ShowxNum(30+10*8,150,task1_num,5,16,0x80);	//显示任务执行次数
+	
+		LCD_ShowxNum(30+10*8,170,hour,2,16,0x80);	   //显示任务执行时间
+		POINT_COLOR=RED;LCD_ShowString(30+12*8,170,110,16,16,":");POINT_COLOR=BLUE;
+		LCD_ShowxNum(30+13*8,170,minute,2,16,0x80);
+		POINT_COLOR=RED;LCD_ShowString(30+15*8,170,110,16,16,":");POINT_COLOR=BLUE;
+		LCD_ShowxNum(30+16*8,170,second,2,16,0x80);
+		printf("Time:  %d：%d：%d \r\n",hour,minute,second);
 		printf("Task1: %d\r\n",task1_num);
 		OSMutexPost(&mymutex,OS_OPT_POST_NONE,&err);
+		//OSSemPost(&mysem,OS_OPT_POST_ALL,&err);//定时中断中发送信号量
 		//OSSched();
 		//LED0_Toggle;
 		OSTimeDlyHMSM(0,0,0,1000,OS_OPT_TIME_HMSM_STRICT,&err); //延时1s
-		//OSSemPost(&mysem,OS_OPT_POST_ALL,&err);//定时中断中发送信号量
+		
 	}
 }
 
@@ -167,7 +197,7 @@ void task2_task(void *p_arg)
 	p_arg = p_arg;
 	
 	POINT_COLOR = RED;
-	LCD_ShowString(30,150,110,16,16,"Task2 Run:00000");
+	LCD_ShowString(30,250,110,16,16,"Task2 Run:00000");
 	POINT_COLOR = BLUE;
 	while(1)
 	{
@@ -175,13 +205,13 @@ void task2_task(void *p_arg)
 		OSMutexPend(&mymutex,0,OS_OPT_PEND_BLOCKING,0,&err);//请求互斥信号量
 		OSTaskSemPost(&Task1_TaskTCB,OS_OPT_POST_NONE,&err); // 使用系统内建信号量向任务 task1  发送信号量
 		
-		LCD_ShowxNum(110,150,task2_num,5,16,0x80);  //显示任务执行次数
+		LCD_ShowxNum(30+10*8,250,task2_num,5,16,0x80);  //显示任务执行次数
 		printf("Task2: %d\r\n",task2_num);
 		OSMutexPost(&mymutex,OS_OPT_POST_NONE,&err);
+		//OSSemPost(&mysem,OS_OPT_POST_ALL,&err);//定时中断中发送信号量
 		//OSSched();
 		//LED1_Toggle;
 		OSTimeDlyHMSM(0,0,0,1000,OS_OPT_TIME_HMSM_STRICT,&err); //延时2s
-		//OSSemPost(&mysem,OS_OPT_POST_ALL,&err);//定时中断中发送信号量
 	}
 }
 

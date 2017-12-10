@@ -4,6 +4,7 @@
 #include "key.h"
 #include "key_exti.h"
 #include "led.h"
+#include "adc.h"
 #include "tftlcd.h"
 #include "ltdc.h"
 #include "sdram.h"
@@ -42,18 +43,19 @@ int main(void)
 	CPU_SR_ALLOC();
     
     Write_Through();                //透写
-		MPU_Memory_Protection();		//保护相关存储区域
+		MPU_Memory_Protection();				//保护相关存储区域
     Cache_Enable();                 //打开L1-Cache
-    HAL_Init();				        //初始化HAL库
+    HAL_Init();				       				//初始化HAL库
     Stm32_Clock_Init(432,25,2,9);   //设置时钟,216Mhz 
     delay_init(216);                //延时初始化
-		uart_init(115200);		        //串口初始化
-    LED_Init();                     //初始化LED
-		KEY_Init();     				//按键初始化
-		KEY_EXTI_Init();                    //外部中断初始化
+		uart_init(115200);		       	  //串口初始化
+    LED_Init();                  	  //初始化LED
+		MY_ADC_Init();								  //初始化ADC
+		KEY_Init();     							  //按键初始化
+		KEY_EXTI_Init();                //外部中断初始化
     SDRAM_Init();                   //初始化SDRAM
 		TFTLCD_Init();			            //初始化LCD
-    //Gizwits_Init();                 //协议初始化
+    //Gizwits_Init();               //协议初始化
 	
     POINT_COLOR = RED;
 //	LCD_ShowString( x, y,width,height,size,u8 *p);

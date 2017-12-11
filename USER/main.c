@@ -11,6 +11,7 @@
 #include "mpu.h"
 #include "includes.h"
 #include "timer.h"
+#include "rtc.h"
 //#include "gizwits_product.h" 
 #include "Gizwits_user.h"
 
@@ -56,14 +57,16 @@ int main(void)
     SDRAM_Init();                   //初始化SDRAM
 		TFTLCD_Init();			            //初始化LCD
     //Gizwits_Init();               //协议初始化
+		RTC_Init();                     //初始化RTC 
+    RTC_Set_WakeUp(RTC_WAKEUPCLOCK_CK_SPRE_16BITS,0); //配置WAKE UP中断,1秒钟中断一次
 	
-    POINT_COLOR = RED;
+    POINT_COLOR = BRED;
 //	LCD_ShowString( x, y,width,height,size,u8 *p);
-	LCD_ShowString(30,10,200,16,16,"Apollo STM32F4/F7");	
-	LCD_ShowString(30,30,200,16,16,"UCOSIII Examp 6-3");
-	LCD_ShowString(30,50,200,16,16,"Task Round-robin");
-	LCD_ShowString(30,70,200,16,16,"ATOM@ALIENTEK");
-	LCD_ShowString(30,90,200,16,16,"2016/7/25");
+	LCD_ShowString(30,10,200,32,32,"Apollo F767IG");	
+	LCD_ShowString(30,46,200,32,32,"UCOSIII EMWIN");
+	LCD_ShowString(30,82,200,32,32,"LWIP GIZWITS");
+	//LCD_ShowString(30,70,200,16,16,"ATOM@ALIENTEK");
+	//LCD_ShowString(30,90,200,16,16,"2016/7/25");
 	//printf("KEY1:AirLink连接模式\t KEY_UP:复位\r\n\r\n"); 
 	
 	OSInit(&err);		            //初始化UCOSIII

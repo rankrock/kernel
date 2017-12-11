@@ -1864,7 +1864,7 @@ void TFTLCD_Init(void)
 	} 	
 	LCD_Display_Dir(0);		//默认为竖屏
 	LCD_LED(1);				//点亮背光
-	LCD_Clear(WHITE);
+	LCD_Clear(GRAY);//WHITE
 }  
 //清屏函数
 //color:要清屏的填充色

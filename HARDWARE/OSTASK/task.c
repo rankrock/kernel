@@ -14,6 +14,7 @@
 #include "os_app_hooks.h"
 #include <stdio.h>
 #include <string.h>
+#include "rtc.h"
 
 #define LIMITE(x,min,max) if(x<min) x=min;if(x>max) x=max;
 
@@ -127,7 +128,22 @@ void start_task(void *p_arg)
 //                 (void   	* )0,				
 //                 (OS_OPT      )OS_OPT_TASK_STK_CHK|OS_OPT_TASK_STK_CLR|OS_OPT_TASK_SAVE_FP, 
 //                 (OS_ERR 	* )&err);
-								 					 
+								 
+	//创建TASK4任务
+	OSTaskCreate((OS_TCB 	* )&Task4_TaskTCB,		
+				 (CPU_CHAR	* )"task4 task", 		
+                 (OS_TASK_PTR )task4_task, 			
+                 (void		* )0,					
+                 (OS_PRIO	  )TASK4_TASK_PRIO,     	
+                 (CPU_STK   * )&TASK4_TASK_STK[0],	
+                 (CPU_STK_SIZE)TASK4_STK_SIZE/10,	
+                 (CPU_STK_SIZE)TASK4_STK_SIZE,		
+                 (OS_MSG_QTY  )0,					
+                 (OS_TICK	  )0,	//时间片长度10ms						
+                 (void   	* )0,				
+                 (OS_OPT      )OS_OPT_TASK_STK_CHK|OS_OPT_TASK_STK_CLR|OS_OPT_TASK_SAVE_FP, 
+                 (OS_ERR 	* )&err);	
+								 
 	OS_CRITICAL_EXIT();	//退出临界区
 								 
 	OSTmrStart(&tmr1,&err);	//开启定时器1
@@ -262,7 +278,37 @@ void task3_task(void *p_arg)
 }
 //
 
-
+//task4任务函数
+void task4_task(void *p_arg)
+{
+	u16 task4_num=0;
+	RTC_TimeTypeDef RTC_TimeStruct;
+	RTC_DateTypeDef RTC_DateStruct;
+	u8 tbuf[40];
+	OS_ERR err;
+	p_arg = p_arg;
+	
+	POINT_COLOR = RED;
+	LCD_ShowString(30,310,110,16,16,"Task4 Run:00000");
+	POINT_COLOR = BLUE;
+	while(1)
+	{
+		task4_num++;
+		LCD_ShowxNum(30+10*8,310,task4_num,5,16,0x80);  //显示任务执行次数
+		printf("Task4: %d\r\n",task4_num);
+		
+		HAL_RTC_GetTime(&RTC_Handler,&RTC_TimeStruct,RTC_FORMAT_BIN);
+		sprintf((char*)tbuf,"Time:%02d:%02d:%02d",RTC_TimeStruct.Hours,RTC_TimeStruct.Minutes,RTC_TimeStruct.Seconds); 
+		LCD_ShowString(30,330,210,16,16,tbuf);	
+		HAL_RTC_GetDate(&RTC_Handler,&RTC_DateStruct,RTC_FORMAT_BIN);
+		sprintf((char*)tbuf,"Date:20%02d-%02d-%02d",RTC_DateStruct.Year,RTC_DateStruct.Month,RTC_DateStruct.Date); 
+		LCD_ShowString(30,350,210,16,16,tbuf);	
+		sprintf((char*)tbuf,"Week:%d",RTC_DateStruct.WeekDay); 
+		LCD_ShowString(30,370,210,16,16,tbuf);
+		
+		OSTimeDlyHMSM(0,0,0,1000,OS_OPT_TIME_HMSM_STRICT,&err); //延时1s
+	}
+}
 
 
 

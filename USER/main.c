@@ -1,6 +1,7 @@
 #include "sys.h"
 #include "delay.h"
 #include "usart.h"
+#include "usmart.h"
 #include "key.h"
 #include "key_exti.h"
 #include "led.h"
@@ -50,6 +51,7 @@ int main(void)
     Stm32_Clock_Init(432,25,2,9);   //设置时钟,216Mhz 
     delay_init(216);                //延时初始化
 		uart_init(115200);		       	  //串口初始化
+	  usmart_dev.init(108); 		    //初始化USMART	
     LED_Init();                  	  //初始化LED
 		MY_ADC_Init();								  //初始化ADC
 		KEY_Init();     							  //按键初始化

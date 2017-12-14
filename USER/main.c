@@ -15,6 +15,7 @@
 #include "rtc.h"
 //#include "gizwits_product.h" 
 #include "Gizwits_user.h"
+#include "pcf8574.h"
 
 /************************************************
  ALIENTEK 阿波罗STM32F7开发板 UCOSIII实验
@@ -51,8 +52,9 @@ int main(void)
     Stm32_Clock_Init(432,25,2,9);   //设置时钟,216Mhz 
     delay_init(216);                //延时初始化
 		uart_init(115200);		       	  //串口初始化
-	  usmart_dev.init(108); 		    //初始化USMART	
+	  usmart_dev.init(108); 		      //初始化USMART	
     LED_Init();                  	  //初始化LED
+		PCF8574_Init();          		    //初始化PCF8574，I/O扩展功能
 		MY_ADC_Init();								  //初始化ADC
 		KEY_Init();     							  //按键初始化
 		KEY_EXTI_Init();                //外部中断初始化

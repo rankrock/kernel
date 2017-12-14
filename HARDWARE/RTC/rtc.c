@@ -3,6 +3,7 @@
 #include "delay.h"
 #include "led.h"
 #include "includes.h"
+#include "pcf8574.h"
 
 RTC_HandleTypeDef RTC_Handler;  //RTC句柄
 
@@ -142,6 +143,10 @@ void RTC_Alarm_IRQHandler(void)
 void HAL_RTC_AlarmAEventCallback(RTC_HandleTypeDef *hrtc)
 {
     printf("ALARM A!\r\n");
+		PCF8574_WriteBit(BEEP_IO,0);	//控制蜂鸣器
+	  delay_ms(3000);
+		PCF8574_WriteBit(BEEP_IO,1);	//控制蜂鸣器
+	
 }
 
 //RTC WAKE UP中断服务函数

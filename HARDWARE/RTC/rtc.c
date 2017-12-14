@@ -102,7 +102,7 @@ void RTC_Set_AlarmA(u8 week,u8 hour,u8 min,u8 sec)
     
     RTC_AlarmSturuct.AlarmMask=RTC_ALARMMASK_NONE;//精确匹配星期，时分秒
     RTC_AlarmSturuct.AlarmSubSecondMask=RTC_ALARMSUBSECONDMASK_NONE;
-    RTC_AlarmSturuct.AlarmDateWeekDaySel=RTC_ALARMDATEWEEKDAYSEL_WEEKDAY;//按星期
+    RTC_AlarmSturuct.AlarmDateWeekDaySel=RTC_ALARMDATEWEEKDAYSEL_WEEKDAY;//按天RTC_ALARMDATEWEEKDAYSEL_DATE;按星期RTC_ALARMDATEWEEKDAYSEL_WEEKDAY
     RTC_AlarmSturuct.AlarmDateWeekDay=week; //星期
     RTC_AlarmSturuct.Alarm=RTC_ALARM_A;     //闹钟A
     HAL_RTC_SetAlarm_IT(&RTC_Handler,&RTC_AlarmSturuct,RTC_FORMAT_BIN);

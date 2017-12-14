@@ -307,6 +307,9 @@ void task4_task(void *p_arg)
 		LCD_ShowString(30,370,210,16,16,tbuf);
 		
 		OSTimeDlyHMSM(0,0,0,1000,OS_OPT_TIME_HMSM_STRICT,&err); //延时1s
+		
+		if(RTC_TimeStruct.Minutes%30==0)
+		RTC_Set_AlarmA(RTC_DateStruct.WeekDay,RTC_TimeStruct.Hours,RTC_TimeStruct.Minutes,10); //每30分钟闹铃响一次，久坐提醒
 	}
 }
 
